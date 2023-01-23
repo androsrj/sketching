@@ -1,6 +1,6 @@
 library(mvtnorm)
 
-### LOG PRIORS ###
+### LOG PRIORS ### 
 
 # Sigma2 (inverse gamma)
 logPriorSigma2 <- function(sigma2, a = 1, b = 2) {
