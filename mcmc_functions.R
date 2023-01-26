@@ -4,12 +4,12 @@ library(mvtnorm)
 
 # Sigma2 (inverse gamma)
 logPriorSigma2 <- function(sigma2, a = 1, b = 2) {
-  log(b^a) - lgamma(a) - (a - 1) * sigma2 - b / sigma2
+  a * log(b) - lgamma(a) - (a + 1) * log(sigma2) - b / sigma2
 }
 
 # Tau2 (inverse gamma)
 logPriorTau2 <- function(tau2, a = 1, b = 2) {
-  log(b^a) - lgamma(a) - (a - 1) * tau2 - b / tau2
+  a * log(b) - lgamma(a) - (a + 1) * log(tau2) - b / tau2
 }
 
 # Theta (uniform for now, could try discrete later)

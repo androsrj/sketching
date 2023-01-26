@@ -57,10 +57,10 @@ newY <- phi %*% yTrain
 newX <- phi %*% xTrain
 
 # MCMC chain properties
-nBurn <- 10 # 3 to 4 thousand ideally
+nBurn <- 100 # 3 to 4 thousand ideally
 nThin <- 2
-nIter <- nBurn + 100 # 15 to 20 thousand ideally
-sd <- 2 # (for proposal distributions, will need to tune)
+nIter <- nBurn + 1000 # 15 to 20 thousand ideally
+sd <- 0.5 # (for proposal distributions, will need to tune)
 
 trSigma2 <- trTau2 <- trTheta <- numeric(nIter) # Transformed parameters
 beta <- matrix(0, nrow = p, ncol = nIter) # Beta
