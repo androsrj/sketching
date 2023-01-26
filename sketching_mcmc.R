@@ -7,44 +7,60 @@ source("pred_process.R") # Predictive process BFE
 source("mcmc_functions.R") # Log likelihood/priors/posterior
 
 ## Define X and beta if desired
-n <- 5000
+nTrain <- 5000
+nTest <- round(0.01 * nTrain)
+n <- nTrain + nTest
 p <- 5
 X <- matrix(rnorm(n * p), nrow = n, ncol = p)
 trueBeta <- runif(p, 0, 10)
 
 # Define distribution bounds for uniform prior on theta
 a <- 1
-b <- 3
+b <- 5
 
-# Simulate Y_star and W_star (having n_star observations)
-n_star <- 50
-subsetData <- simSpatialData(n = n_star)
-Wstar <- subsetData$W
-Ystar <- subsetData$Y
-Sstar <- subsetData$S
+# Simulate Y_star and W_star (having nStar observations)
+fullData <- simSpatialData(n = n, X = X, beta = trueBeta)
 
-# Simulate Y and W (full dataset)
-fullData <- predProcess(Wstar, Ystar, Sstar, n = n, X = X, beta = trueBeta)
-y <- fullData$Y
-condExpW <- fullData$condExpW
-S <- fullData$S
+# Extract training data
+xTrain <- X[1:nTrain, ]
+yTrain <- fullData$Y[1:nTrain]
+wTrain <- fullData$W[1:nTrain]
+sTrain <- fullData$S[1:nTrain]
+
+# Extract testing data
+xTest <- X[(nTrain+1):n, ]
+yTest <- fullData$Y[(nTrain+1):n]
+wTest <- fullData$W[(nTrain+1):n]
+sTest <- fullData$S[(nTrain+1):n]
+
+#subsetData <- simSpatialData(n = n + n_pred)
+#Wstar <- subsetData$W
+#Ystar <- subsetData$Y
+#Sstar <- subsetData$S
+
+# Fit predictive process BFE on training data
+nKnots <- 20
+#BFE <- predProcess(Wstar, Ystar, Sstar, n = n, X = X, beta = trueBeta)
+#y <- fullData$Y
+#condExpW <- fullData$condExpW
+#S <- fullData$S
 
 # Dimensions for subset data and distance matrix for full/subset data
-m <- round(0.01 * n)
-D <- rdist(S)
-Dstar <- rdist(Sstar)
-Dcov <- rdist(S, Sstar)
+DTrain <- rdist(sTrain)
+DTest <- rdist(sTest)
+DCov <- rdist(sTrain, sTest)
 
 # Generate phi and compress data
-phi <- matrix(rnorm(m * n, 0, n), nrow = m, ncol = n)
-newY <- phi %*% y
-newX <- phi %*% X
+m <- round(0.01 * nTrain)
+phi <- matrix(rnorm(m * nTrain, 0, nTrain), nrow = m, ncol = nTrain)
+newY <- phi %*% yTrain
+newX <- phi %*% xTrain
 
 # MCMC chain properties
-nBurn <- 10
+nBurn <- 10 # 3 to 4 thousand ideally
 nThin <- 2
-nIter <- nBurn + 100
-sd <- 1 # (for proposal distributions)
+nIter <- nBurn + 100 # 15 to 20 thousand ideally
+sd <- 2 # (for proposal distributions, will need to tune)
 
 trSigma2 <- trTau2 <- trTheta <- numeric(nIter) # Transformed parameters
 beta <- matrix(0, nrow = p, ncol = nIter) # Beta
@@ -57,6 +73,8 @@ trTau2[1] <- log(0.5)
 trTheta[1] <- log((2 - a) / (b - 2))
 beta[ , 1] <- rep(0, p)
 
+# Change a and b to 1 and 10 or something (larger range)
+
 # Run Gibbs/Metropolis for one chain
 for (i in 2:nIter) {
   
@@ -65,7 +83,7 @@ for (i in 2:nIter) {
   propTrSigma2 <- rnorm(1, mean = trSigma2[i - 1], sd = sd)
   MHratio <- logPost(propTrSigma2, trTau2[i - 1], trTheta[i - 1], beta[ , i - 1]) - 
     logPost(trSigma2[i - 1], trTau2[i - 1], trTheta[i - 1], beta[ , i - 1])
-  if(log(runif(1)) < MHratio) {
+  if(runif(1) < exp(MHratio)) {
     trSigma2[i] <- propTrSigma2
     acceptSigma2 <- acceptSigma2 + 1
   } else {
@@ -77,7 +95,7 @@ for (i in 2:nIter) {
   propTrTau2 <- rnorm(1, mean = trTau2[i - 1], sd = sd)
   MHratio <- logPost(trSigma2[i], propTrTau2, trTheta[i - 1], beta[ , i - 1]) - 
     logPost(trSigma2[i], trTau2[i - 1], trTheta[i - 1], beta[ , i - 1])
-  if(log(runif(1)) < MHratio) {
+  if(runif(1) < exp(MHratio)) { 
     trTau2[i] <- propTrTau2
     acceptTau2 <- acceptTau2 + 1
   } else {
@@ -89,7 +107,7 @@ for (i in 2:nIter) {
   propTrTheta <- rnorm(1, mean = trTheta[i - 1], sd = sd)
   MHratio <- logPost(trSigma2[i], trTau2[i], propTrTheta, beta[ , i - 1]) - 
     logPost(trSigma2[i], trTau2[i], trTheta[i - 1], beta[ , i - 1])
-  if(log(runif(1)) < MHratio) {
+  if(runif(1) < exp(MHratio)) {
     trTheta[i] <- propTrTheta
     acceptTheta <- acceptTheta + 1 
   } else {
@@ -102,8 +120,8 @@ for (i in 2:nIter) {
   tempSigma2 <- exp(trSigma2[i])
   tempTau2 <- exp(trTau2[i])
   tempTheta <- fInv(trTheta[i])
-  C <- tempSigma2 * exp(- tempTheta * Dcov)
-  Cstar <- tempSigma2 * exp(- tempTheta * Dstar)
+  C <- tempSigma2 * exp(- tempTheta * DCov)
+  Cstar <- tempSigma2 * exp(- tempTheta * DTest)
   Sigma <- phi %*% C %*% solve(Cstar) %*% t(C) %*% t(phi) + tempTau2 * diag(m)
   SigmaInv <- solve(Sigma)
   SigmaBeta <- (n / m) * t(newX) %*% SigmaInv %*% newX + diag(p)
@@ -128,7 +146,7 @@ nSamples <- length(index)
 # Back-transform
 sigma2 <- exp(trSigma2)
 tau2 <- exp(trTau2)
-theta <- exp(trTheta)
+theta <- fInv(trTheta)
 
 # Trace plots
 plot(1:nSamples, sigma2, type = 'l', main = "Trace Plot for sigma2")

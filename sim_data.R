@@ -2,7 +2,7 @@ library(mvtnorm)
 library(fields)
 
 simSpatialData <- function(n, X = NULL, range = c(0, 10), dims = 2, 
-                           theta = 5, sigma2 = 3, beta = c(2,2), tau2 = 2,
+                           theta = 3, sigma2 = 2, tau2 = 2, beta = c(2, 2),
                            covariance = "exponential") {
   
   # Sample the locations and put them into an n-by-dims matrix
