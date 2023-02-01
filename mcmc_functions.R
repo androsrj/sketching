@@ -30,7 +30,7 @@ fInv <- function(trTheta, a = 1, b = 5) {
 
 # Log-Jacobian for theta, (log-derivative of fInv function above)
 jac <- function(trTheta, a = 1, b = 5) {
-  # log( (b - a) * exp(trTheta) / (1 + exp(trTheta))^2 ) $ or simplify, as below
+  # log( (b - a) * exp(trTheta) / (1 + exp(trTheta))^2 ) # or simplify, as below
   log(b - a) + trTheta - 2 * log(1 + exp(trTheta))
 }
 

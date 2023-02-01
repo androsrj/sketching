@@ -7,7 +7,7 @@ source("pred_process.R") # Predictive process BFE
 source("mcmc_functions.R") # Log likelihood/priors/posterior
 
 ## Define X and beta if desired
-nTrain <- 5000
+nTrain <- 500
 nTest <- round(0.01 * nTrain)
 n <- nTrain + nTest
 p <- 5
@@ -57,10 +57,10 @@ newY <- phi %*% yTrain
 newX <- phi %*% xTrain
 
 # MCMC chain properties
-nBurn <- 100 # 3 to 4 thousand ideally
+nBurn <- 1000 # 3 to 4 thousand ideally
 nThin <- 2
-nIter <- nBurn + 1000 # 15 to 20 thousand ideally
-sd <- 0.5 # (for proposal distributions, will need to tune)
+nIter <- nBurn + 10000 # 15 to 20 thousand ideally
+sd <- 2 # (for proposal distributions, will need to tune)
 
 trSigma2 <- trTau2 <- trTheta <- numeric(nIter) # Transformed parameters
 beta <- matrix(0, nrow = p, ncol = nIter) # Beta
@@ -68,12 +68,10 @@ acceptSigma2 <- acceptTau2 <- acceptTheta <- 0 # Track acceptance rates
 
 # Initial values of transformed parameters (except for beta, not transformed)
 # (could definitely be different than what I have here)
-trSigma2[1] <- log(0.5)
-trTau2[1] <- log(0.5)
+trSigma2[1] <- log(1)
+trTau2[1] <- log(1)
 trTheta[1] <- log((2 - a) / (b - 2))
 beta[ , 1] <- rep(0, p)
-
-# Change a and b to 1 and 10 or something (larger range)
 
 # Run Gibbs/Metropolis for one chain
 for (i in 2:nIter) {

@@ -3,18 +3,19 @@ library(mcmc)
 
 ### LOG POSTERIOR ###
 obj <- function(params) {
-  sigma2 <- params[1]
-  tau2 <- params[2]
-  theta <- params[3]
+  trSigma2 <- params[1]
+  trTau2 <- params[2]
+  trTheta <- params[3]
   beta <- params[4:length(params)]
-  logLik(sigma2, tau2, theta, beta) + # Likelihood
-    logPriorBeta(beta) + logPriorTheta(theta) + # Priors
-    logPriorTau2(tau2) + logPriorSigma2(sigma2) # Priors
+  logLik(exp(trSigma2), exp(trTau2), fInv(trTheta), beta) + # Likelihood
+    logPriorBeta(beta) + logPriorTheta(fInv(trTheta)) + # Priors
+    logPriorTau2(exp(trTau2)) + logPriorSigma2(exp(trSigma2)) + # Priors
+    trTau2 + trSigma2 + jac(trTheta) # Jacobians
 }
 
 p <- 5
-m <- metrop(obj = obj, initial = c(0.5, 0.5, 2, rep(0, p)), nbatch = 2, blen = 100)
-m$batch
-m$final
-m$accept
+met <- metrop(obj = obj, initial = c(log(1), log(1), fInv(3), trueBeta), nbatch = 4, blen=10000)
+met$batch
+met$final
+met$accept
 
