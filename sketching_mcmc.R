@@ -60,7 +60,7 @@ newX <- phi %*% xTrain
 nBurn <- 1000 # 3 to 4 thousand ideally
 nThin <- 2
 nIter <- nBurn + 10000 # 15 to 20 thousand ideally
-sd <- 2 # (for proposal distributions, will need to tune)
+sd <- 5 # (for proposal distributions, will need to tune)
 
 trSigma2 <- trTau2 <- trTheta <- numeric(nIter) # Transformed parameters
 beta <- matrix(0, nrow = p, ncol = nIter) # Beta
@@ -126,6 +126,8 @@ for (i in 2:nIter) {
   SigmaBetaInv <- solve(SigmaBeta)
   meanBeta <- (n / m) * SigmaBetaInv %*% t(newX) %*% SigmaInv %*% newY
   beta[ , i] <- t(rmvnorm(1, meanBeta, SigmaBetaInv))
+  
+  #i=i+1
 }
 
 # Acceptance rates (for Metropolis-sampled parameters)

@@ -29,7 +29,7 @@ fInv <- function(trTheta, a = 1, b = 5) {
 }
 
 # Log-Jacobian for theta, (log-derivative of fInv function above)
-jac <- function(trTheta, a = 1, b = 5) {
+logJac <- function(trTheta, a = 1, b = 5) {
   # log( (b - a) * exp(trTheta) / (1 + exp(trTheta))^2 ) # or simplify, as below
   log(b - a) + trTheta - 2 * log(1 + exp(trTheta))
 }
@@ -50,7 +50,7 @@ logPost <- function(trSigma2, trTau2, trTheta, beta) {
   logLik(exp(trSigma2), exp(trTau2), fInv(trTheta), beta) + # Likelihood
     logPriorBeta(beta) + logPriorTheta(fInv(trTheta)) + # Priors
     logPriorTau2(exp(trTau2)) + logPriorSigma2(exp(trSigma2)) + # Priors
-    trTau2 + trSigma2 + jac(trTheta) # Jacobians
+    trTau2 + trSigma2 + logJac(trTheta) # Jacobians
   # Taking the log and exp of trTau2 and trSigma2 cancels out
 }
 
