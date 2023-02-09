@@ -78,7 +78,8 @@ for (i in 2:nIter) {
   
   ### Metropolis update (sigma2) ###
   
-  propTrSigma2 <- rnorm(1, mean = trSigma2[i - 1], sd = sd)
+  #propTrSigma2 <- rnorm(1, mean = trSigma2[i - 1], sd = sd)
+  propTrSigma2 <- runif(1, trSigma2[i - 1] - sd, trSigma2[i - 1] + sd)
   MHratio <- logPost(propTrSigma2, trTau2[i - 1], trTheta[i - 1], beta[ , i - 1]) - 
     logPost(trSigma2[i - 1], trTau2[i - 1], trTheta[i - 1], beta[ , i - 1])
   if(runif(1) < exp(MHratio)) {
@@ -90,7 +91,8 @@ for (i in 2:nIter) {
   
   ### Metropolis update (tau2) ###
   
-  propTrTau2 <- rnorm(1, mean = trTau2[i - 1], sd = sd)
+  #propTrTau2 <- rnorm(1, mean = trTau2[i - 1], sd = sd)
+  propTrTau2 <- runif(1, trTau2[i - 1] - sd, trTau2[i - 1] + sd)
   MHratio <- logPost(trSigma2[i], propTrTau2, trTheta[i - 1], beta[ , i - 1]) - 
     logPost(trSigma2[i], trTau2[i - 1], trTheta[i - 1], beta[ , i - 1])
   if(runif(1) < exp(MHratio)) { 
@@ -102,7 +104,8 @@ for (i in 2:nIter) {
   
   ### Metropolis update (theta) ###
   
-  propTrTheta <- rnorm(1, mean = trTheta[i - 1], sd = sd)
+  #propTrTheta <- rnorm(1, mean = trTheta[i - 1], sd = sd)
+  propTrTheta <- runif(1, trTheta[i - 1] - sd, trTheta[i - 1] + sd)
   MHratio <- logPost(trSigma2[i], trTau2[i], propTrTheta, beta[ , i - 1]) - 
     logPost(trSigma2[i], trTau2[i], trTheta[i - 1], beta[ , i - 1])
   if(runif(1) < exp(MHratio)) {
@@ -155,11 +158,17 @@ plot(1:nSamples, theta, type = 'l', main = "Trace Plot for theta")
 plot(1:nSamples, beta[1, ], type = 'l', main = "Trace Plot for beta_1")
 plot(1:nSamples, beta[p, ], type = 'l', main = "Trace Plot for beta_p")
 
-# Posterior mean estimates
+# Posterior mean estimates (fairly skewed because of back-transformations, not as reliable)
 mean(sigma2)
 mean(tau2)
 mean(theta)
 apply(beta, 1, mean)
+
+# Posterior median estimates (more accurate)
+median(sigma2)
+median(tau2)
+median(theta)
+apply(beta, 1, median)
 
 # 95% credible intervals
 quantile(sigma2, c(0.025, 0.975))
