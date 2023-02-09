@@ -24,3 +24,4 @@ thetaDensity <- sapply(thetaVals, \(x) logPost(log(trueSigma2), log(trueTau2), f
 plot(thetaVals, thetaDensity)
 thetaVals[which.max(thetaDensity)]
 
+
