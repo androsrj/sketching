@@ -15,8 +15,8 @@ X <- matrix(rnorm(n * p), nrow = n, ncol = p)
 trueBeta <- runif(p, 0, 10)
 
 # Define distribution bounds for uniform prior on theta
-a <- 1
-b <- 5
+a <- 0.5
+b <- 10
 
 # Simulate Y_star and W_star (having nStar observations)
 fullData <- simSpatialData(n = n, X = X, beta = trueBeta)
@@ -51,8 +51,8 @@ DTest <- rdist(sTest)
 DCov <- rdist(sTrain, sTest)
 
 # Generate phi and compress data
-m <- round(0.01 * nTrain)
-phi <- matrix(rnorm(m * nTrain, 0, nTrain), nrow = m, ncol = nTrain)
+m <- round(0.1 * nTrain)
+phi <- matrix(rnorm(m * nTrain, 0, sqrt(nTrain)), nrow = m, ncol = nTrain)
 newY <- phi %*% yTrain
 newX <- phi %*% xTrain
 
@@ -60,7 +60,12 @@ newX <- phi %*% xTrain
 nBurn <- 1000 # 3 to 4 thousand ideally
 nThin <- 2
 nIter <- nBurn + 10000 # 15 to 20 thousand ideally
-sd <- 5 # (for proposal distributions, will need to tune)
+
+# Tuning parameters for variance of each proposal distribution
+# May need to adjust later for better acceptance rates
+sdSigma2 <- 5
+sdTau2 <- 1
+sdTheta <- 7
 
 trSigma2 <- trTau2 <- trTheta <- numeric(nIter) # Transformed parameters
 beta <- matrix(0, nrow = p, ncol = nIter) # Beta
@@ -78,8 +83,8 @@ for (i in 2:nIter) {
   
   ### Metropolis update (sigma2) ###
   
-  #propTrSigma2 <- rnorm(1, mean = trSigma2[i - 1], sd = sd)
-  propTrSigma2 <- runif(1, trSigma2[i - 1] - sd, trSigma2[i - 1] + sd)
+  #propTrSigma2 <- rnorm(1, mean = trSigma2[i - 1], sd = sdSigma2)
+  propTrSigma2 <- runif(1, trSigma2[i - 1] - sdSigma2, trSigma2[i - 1] + sdSigma2)
   MHratio <- logPost(propTrSigma2, trTau2[i - 1], trTheta[i - 1], beta[ , i - 1]) - 
     logPost(trSigma2[i - 1], trTau2[i - 1], trTheta[i - 1], beta[ , i - 1])
   if(runif(1) < exp(MHratio)) {
@@ -91,8 +96,8 @@ for (i in 2:nIter) {
   
   ### Metropolis update (tau2) ###
   
-  #propTrTau2 <- rnorm(1, mean = trTau2[i - 1], sd = sd)
-  propTrTau2 <- runif(1, trTau2[i - 1] - sd, trTau2[i - 1] + sd)
+  #propTrTau2 <- rnorm(1, mean = trTau2[i - 1], sd = sdTau2)
+  propTrTau2 <- runif(1, trTau2[i - 1] - sdTau2, trTau2[i - 1] + sdTau2)
   MHratio <- logPost(trSigma2[i], propTrTau2, trTheta[i - 1], beta[ , i - 1]) - 
     logPost(trSigma2[i], trTau2[i - 1], trTheta[i - 1], beta[ , i - 1])
   if(runif(1) < exp(MHratio)) { 
@@ -104,8 +109,8 @@ for (i in 2:nIter) {
   
   ### Metropolis update (theta) ###
   
-  #propTrTheta <- rnorm(1, mean = trTheta[i - 1], sd = sd)
-  propTrTheta <- runif(1, trTheta[i - 1] - sd, trTheta[i - 1] + sd)
+  #propTrTheta <- rnorm(1, mean = trTheta[i - 1], sd = sdTheta)
+  propTrTheta <- runif(1, trTheta[i - 1] - sdTheta, trTheta[i - 1] + sdTheta)
   MHratio <- logPost(trSigma2[i], trTau2[i], propTrTheta, beta[ , i - 1]) - 
     logPost(trSigma2[i], trTau2[i], trTheta[i - 1], beta[ , i - 1])
   if(runif(1) < exp(MHratio)) {

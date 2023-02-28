@@ -2,7 +2,7 @@ library(mvtnorm)
 library(fields)
 
 simSpatialData <- function(n, X = NULL, range = c(0, 10), dims = 2, 
-                           theta = 3, sigma2 = 2, tau2 = 2, beta = c(2, 2),
+                           theta = 3, sigma2 = 5, tau2 = 5, beta = c(2, 2),
                            covariance = "exponential") {
   
   # Sample the locations and put them into an n-by-dims matrix
@@ -31,7 +31,7 @@ simSpatialData <- function(n, X = NULL, range = c(0, 10), dims = 2,
   }
   
   # Sample epsilon
-  eps <- rnorm(n, 0, 1 / tau2)
+  eps <- rnorm(n, 0, sqrt(tau2))
   
   # Generate Y
   Y <- X %*% beta + W + eps
